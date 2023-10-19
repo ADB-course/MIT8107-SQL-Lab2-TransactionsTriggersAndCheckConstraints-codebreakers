@@ -1,0 +1,92 @@
+-- List all the databases
+SHOW DATABASES;
+-- switch to the current database
+USE 75855_lab2_triggers;
+-- list of all tables
+SHOW TABLES;
+
+-- STEP 1
+SHOW CREATE TABLE employees;
+CREATE TABLE `employees` (
+  `employeeNumber` int NOT NULL,
+  `lastName` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `firstName` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `extension` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `officeCode` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `reportsTo` int DEFAULT NULL,
+  `jobTitle` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  PRIMARY KEY (`employeeNumber`),
+  KEY `reportsTo` (`reportsTo`),
+  KEY `officeCode` (`officeCode`),
+  CONSTRAINT `employees_ibfk_1` FOREIGN KEY (`reportsTo`) REFERENCES `employees` (`employeeNumber`),
+  CONSTRAINT `employees_ibfk_2` FOREIGN KEY (`officeCode`) REFERENCES `offices` (`officeCode`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `employees_undo` (
+  `date_of_change` timestamp(2) NOT NULL DEFAULT CURRENT_TIMESTAMP(2),
+  `employeeNumber` int NOT NULL,
+  `lastName` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `firstName` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `extension` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `officeCode` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `reportsTo` int DEFAULT NULL,
+  `jobTitle` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `change_type` varchar(50) NOT NULL,
+  PRIMARY KEY (`date_of_change`),
+  UNIQUE KEY `date_of_change_UNIQUE` (`date_of_change`)
+
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- STEP 2
+CREATE
+ 
+ TRIGGER TRG_BEFORE_UPDATE_ON_employees
+ BEFORE UPDATE ON employees FOR EACH ROW
+ 
+ INSERT INTO `employees_undo` SET
+ `date_of_change` = CURRENT_TIMESTAMP(2),
+ `employeeNumber` = OLD.`employeeNumber` ,
+ `lastName` = OLD.`lastName` ,
+ `firstName` = OLD.`firstName` ,
+ `extension` = OLD.`extension` ,
+ `email` = OLD.`email` ,
+ `officeCode` = OLD.`officeCode` ,
+ `reportsTo` = OLD.`reportsTo` ,
+ `jobTitle` = OLD.`jobTitle` ,
+ `change_type` = 'An update DML operation was executed';
+
+ -- STEP 4
+ SHOW TRIGGERS;
+ UPDATE `employees`
+SET
+`lastName` = 'Muiruri'
+WHERE
+
+`employeeNumber` = '1056';
+SELECT * FROM employees_undo;
+
+-- STEP 5
+CREATE TABLE `customers_data_reminders` (
+`customerNumber` int NOT NULL COMMENT 'Identifies the customer whose data
+is partly missing',
+`customers_data_reminders_timestamp` timestamp(2) NOT NULL DEFAULT
+CURRENT_TIMESTAMP(2) COMMENT 'Records the time when the missing data was
+detected',
+`customers_data_reminders_message` varchar(100) NOT NULL COMMENT 'Records
+a message that helps the customer service personnel to know what data is
+missing from the customer\'s record',
+`customers_data_reminders_status` tinyint NOT NULL DEFAULT '0' COMMENT
+'Used to record the status of a reminder (0 if it has not yet been
+addressed and 1 if it has been addressed)',
+PRIMARY KEY
+(`customerNumber`,`customers_data_reminders_timestamp`,`customers_data_remi
+nders_message`,`customers_data_reminders_status`),
+CONSTRAINT `FK_1_customers_TO_M_customers_data_reminders` FOREIGN KEY
+(`customerNumber`) REFERENCES `customers` (`customerNumber`)
+ON DELETE CASCADE
+ON UPDATE CASCADE
+) ENGINE=InnoDB COMMENT='Used to remind the customer service personnel
+about a client\'s missing data. This enables them to ask the client to
+provide the data during the next interaction with the client.'
