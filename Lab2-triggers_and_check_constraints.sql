@@ -18,6 +18,9 @@ ADD orderTotal decimal(10,2);
 -- create the new column in payments table to record the ordorderNumber
 ALTER TABLE payments
 ADD orderNumber int NOT NULL;
+-- Add a check constraint to check the credit limit column in the customers table
+ALTER TABLE customers
+ADD CONSTRAINT check_credit_limit CHECK (creditLimit >= 0);
 
 -- Create Triggers
 
